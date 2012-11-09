@@ -45,6 +45,7 @@ class ActiveRecord::Base
     alias_method :delete!,  :delete
     include Paranoia
     default_scope :conditions => { :deleted_at => nil }
+    scope :at, lambda { |time| where("created_at <= ?", time).where("deleted_at is null OR deleted_at >= ?", time) }
   end
 
   def self.paranoid? ; false ; end
