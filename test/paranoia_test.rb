@@ -1,5 +1,6 @@
 require 'test/unit'
 require 'active_record'
+require 'active_support/core_ext/module/attribute_accessors'
 require File.expand_path(File.dirname(__FILE__) + "/../lib/paranoia")
 
 DB_FILE = 'tmp/test_db'
@@ -136,6 +137,20 @@ class ParanoiaTest < Test::Unit::TestCase
     model.delete!
     
     assert_equal false, ParanoidModel.unscoped.exists?(model.id)
+  end
+  
+  def test_without_scoping 
+    model = ParanoidModel.new
+    model.save
+    model.destroy
+
+    assert_equal false, ParanoidModel.exists?(model.id)
+    assert_equal true, ParanoidModel.unscoped.exists?(model.id)
+
+    Paranoia.without_scoping do
+      assert_equal true, ParanoidModel.exists?(model.id)
+      assert_equal true, ParanoidModel.unscoped.exists?(model.id)
+    end
   end
 
   private
