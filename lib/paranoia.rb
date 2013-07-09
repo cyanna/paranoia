@@ -1,4 +1,14 @@
 module Paranoia
+  mattr_accessor :default_scope_enabled
+  @@default_scope_enabled = true
+
+  def self.without_scoping
+    self.default_scope_enabled = false
+    yield
+  ensure
+    self.default_scope_enabled = true
+  end
+
   def self.included(klazz)
     klazz.extend Query
   end
@@ -41,10 +51,16 @@ end
 
 class ActiveRecord::Base
   def self.acts_as_paranoid
-    alias_method :destroy!, :destroy
-    alias_method :delete!,  :delete
+    alias :destroy! :destroy
+    alias :delete!  :delete
     include Paranoia
-    default_scope :conditions => { :deleted_at => nil }
+    default_scope do
+      if Paranoia.default_scope_enabled
+        where(deleted_at: nil)
+      else
+        unscoped
+      end
+    end
     scope :at, lambda { |time| where("created_at <= ?", time).where("deleted_at is null OR deleted_at >= ?", time) }
   end
 
